@@ -13,7 +13,7 @@
 using namespace std;
 using namespace chrono;
 
-// struct for the House class including all the features of the house
+// Struct for the House class including all the features of the house
 struct House {
     string address;
     string state;
