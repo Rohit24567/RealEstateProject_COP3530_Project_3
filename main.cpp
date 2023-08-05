@@ -1,19 +1,20 @@
-#include <unordered_map>
-#include <vector>
-#include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <stdexcept>
 #include <memory>
 #include <chrono>
-#include <queue>
 #include <random>
 #include <ctime>
+#include <string>
+#include <vector>
+#include <queue>
+#include <unordered_map>
 
 using namespace std;
 using namespace chrono;
 
+// struct for the House class including all the features of the house
 struct House {
     string address;
     string state;
@@ -23,7 +24,7 @@ struct House {
     int houseSize;
 };
 
-// Node structure
+// struct for the Node class and how the graph will be created
 struct Node {
     House house;
     shared_ptr<Node> left;
@@ -32,33 +33,28 @@ struct Node {
     Node(const House& m) : house(m), left(nullptr), right(nullptr) {}
 };
 
-// BST class
 class BST {
 private:
     shared_ptr<Node> root;
-
-    // Helper function for inserting a house into the BST
+    // Insert function to decide where the node should be inserted in the BST
     void insert(shared_ptr<Node>& node, const House& house) {
         if (!node) {
             node = make_shared<Node>(house);
         }
-        else if (house.price < node->house.price) {
-            insert(node->left, house);
-        }
-        else {
+        else if (house.price >= node->house.price) {
             insert(node->right, house);
         }
+        else {
+            insert(node->left, house);
+        }
     }
-
-    // Helper function for filtering houses by maximum price and minimum size
+    // Function to help filter the tree based on the users max_price and min_size inputs
     void in_order_traversal(shared_ptr<Node> node, const string &chosen_state, int max_price, BST &size_filtered_tree, int min_size) {
         if (!node) {
             return;
         }
-
         in_order_traversal(node->left, chosen_state, max_price, size_filtered_tree, min_size);
 
-        // Check if the house belongs to the chosen state
         if (node->house.state.find(chosen_state) != string::npos) {
             if (node->house.price <= max_price && node->house.houseSize >= min_size) {
                 size_filtered_tree.insert(node->house);
@@ -69,8 +65,7 @@ private:
         }
         in_order_traversal(node->right, chosen_state, max_price, size_filtered_tree, min_size);
     }
-
-// Helper function for inserting houses into a vector using in-order traversal
+    // Function to create a vector with all the filtered houses
     void in_order_traversal_to_vector(shared_ptr<Node> node, vector<House> &houses) {
         if (!node) {
             return;
@@ -80,34 +75,7 @@ private:
         houses.push_back(node->house);
         in_order_traversal_to_vector(node->right, houses);
     }
-
-    // Helper function for DFS traversal
-    void dfs(shared_ptr<Node> node) {
-        if (!node) {
-            return;
-        }
-
-        dfs(node->left);
-        dfs(node->right);
-    }
-
-    // Helper function for choosing a random house using DFS traversal
-    House choose_random_house_dfs(shared_ptr<Node> node, int &count, int target_count) {
-        if (!node) {
-            return House{"", "", 0, 0, 0, 0};
-        }
-        House left_house = choose_random_house_dfs(node->left, count, target_count);
-        if (!left_house.address.empty()) {
-            return left_house;
-        }
-        if (count == target_count) {
-            return node->house;
-        }
-        count++;
-        return choose_random_house_dfs(node->right, count, target_count);
-    }
-
-    // Helper function for choosing a random house using BFS traversal
+    // Function for the surprise feature of the program using BFS
     House choose_random_house_bfs(int target_count) {
         if (!root) {
             return House{"", "", 0, 0, 0, 0};
@@ -122,36 +90,55 @@ private:
                 return current->house;
             }
             count++;
-            if (current->left) {
-                q.push(current->left);
-            }
             if (current->right) {
                 q.push(current->right);
+            }
+            if (current->left) {
+                q.push(current->left);
             }
         }
         return House{"", "", 0, 0, 0, 0};
     }
+    // DFS traversal
+    void dfs(shared_ptr<Node> node) {
+        if (!node) {
+            return;
+        }
+
+        dfs(node->left);
+        dfs(node->right);
+    }
+    // Function for the surprise feature of the program using DFS
+    House choose_random_house_dfs(shared_ptr<Node> node, int &count, int target_count) {
+        if (!node) {
+            return House{"", "", 0, 0, 0, 0};
+        }
+        House left_house = choose_random_house_dfs(node->left, count, target_count);
+        if (count == target_count) {
+            return node->house;
+        }
+        if (!left_house.address.empty()) {
+            return left_house;
+        }
+        count++;
+        return choose_random_house_dfs(node->right, count, target_count);
+    }
 
 public:
     BST() : root(nullptr) {}
-    // Public function for inserting a house
+    // Inserting a house into a BST
     void insert(const House& house) {
         insert(root, house);
     }
-    // Public function for filtering houses by maximum price and minimum size
+    // Public function to help filter the tree based on the users max_price and min_size inputs
     void filter_houses_by_size(const string &chosen_state,int max_price, BST &size_filtered_tree, int min_size) {
         in_order_traversal(root, chosen_state, max_price, size_filtered_tree, min_size);
     }
-    // Public function for inserting houses into a vector using in-order traversal
+    // Public function to create a vector with all the filtered houses
     void filtered_houses_to_vector(vector<House> &houses) {
         in_order_traversal_to_vector(root, houses);
     }
-
-    // DFS traversal
-    void dfs_traversal() {
-        dfs(root);
-    }
-    // BFS traversal
+    // Public BFS traversal
     void bfs_traversal() {
         if (!root) {
             return;
@@ -161,16 +148,21 @@ public:
         while (!q.empty()) {
             shared_ptr<Node> current = q.front();
             q.pop();
-            if (current->left) {
-                q.push(current->left);
-            }
             if (current->right) {
                 q.push(current->right);
             }
+            if (current->left) {
+                q.push(current->left);
+            }
         }
+    }
+    // Public DFS traversal
+    void dfs_traversal() {
+        dfs(root);
     }
 };
 
+// Function used to read the CSV file and store the houses in a vector containing the house struct
 void read_csv_file(const string &filename, unordered_map<string, vector<House>> &state_to_houses) {
     ifstream file(filename);
     if (!file.is_open()) {
@@ -195,13 +187,11 @@ void read_csv_file(const string &filename, unordered_map<string, vector<House>> 
             House house{address, state, bedrooms, bathrooms, price, houseSize};
             state_to_houses[state].push_back(house);
         } catch (const exception &e) {
-            // Ignore any lines that can't be processed
             continue;
         }
     }
 }
-
-// Function for reading housing data from a CSV file and storing it in a map
+// Function used to read the CSV file and store the houses in an unordered map
 void read_csv_file_map(const string &filename, unordered_map<string, House> &houses) {
     ifstream file(filename);
     if (!file.is_open()) {
@@ -216,11 +206,9 @@ void read_csv_file_map(const string &filename, unordered_map<string, House> &hou
             stringstream ss(line);
             string token;
             vector<string> row;
-            // Split the CSV row into tokens
             while (getline(ss, token, ',')) {
                 row.push_back(token);
             }
-            // Extract housing information from the tokens
             string address = row[5];           // address of house
             string state = row[8];             // state of house
             int bedrooms = stoi(row[2]);       // bedrooms
@@ -228,29 +216,14 @@ void read_csv_file_map(const string &filename, unordered_map<string, House> &hou
             int price = stoi(row[1]);          // price of the house in USD
             int houseSize = stoi(row[10]);     // size of house in square feet
             House house{address, state, bedrooms, bathrooms, price, houseSize};
-            // Add the house to the map using its title as the key
             houses[address] = house;
         }
         catch (const exception &e) {
-            // Ignore any lines that can't be processed
             continue;
         }
     }
 }
-
-// Function for printing all houses in a map to the console
-void printAllHouses(unordered_map<string, House> houses){
-    for (const auto &house : houses) {
-        cout << "Address: " << house.second.address << endl;
-        cout << "State: " << house.second.state << endl;
-        cout << "# of Bedrooms: " << house.second.bedrooms << endl;
-        cout << "# of Bathrooms: " << house.second.bathrooms << endl;
-        cout << "House Size (sq. ft): " << house.second.houseSize << endl;
-        cout << endl;
-    }
-}
-
-// Function for selecting a random house from a map
+// Function used to select a random house from the map
 House select_random_house_from_map(const unordered_map<string, House> &houses) {
     if (houses.empty()) {
         return House{"", "", 0, 0, 0, 0};
@@ -268,12 +241,23 @@ House select_random_house_from_map(const unordered_map<string, House> &houses) {
     }
     return House{"", "", 0, 0, 0, 0};
 }
+// Function used to print all the features of the houses
+void printAllHouses(unordered_map<string, House> houses){
+    for (const auto &house : houses) {
+        cout << "Address: " << house.second.address << endl;
+        cout << "State: " << house.second.state << endl;
+        cout << "# of Bedrooms: " << house.second.bedrooms << endl;
+        cout << "# of Bathrooms: " << house.second.bathrooms << endl;
+        cout << "House Size (sq. ft): " << house.second.houseSize << endl;
+        cout << endl;
+    }
+}
 
 int main() {
     unordered_map<string, vector<House>> state_to_houses;
-    read_csv_file("realtordata.csv", state_to_houses);
+    read_csv_file("realtordata.txt", state_to_houses);
     unordered_map<string, House> houses;
-    read_csv_file_map("realtordata.csv", houses);
+    read_csv_file_map("realtordata.txt", houses);
     cout << "Ready to Search for Your Dream Home?" << endl;
     cout << "What is your name?" << endl;
     string name = "";
@@ -281,16 +265,15 @@ int main() {
     int choice;
     bool runAgain = true;
     while (runAgain) {
-        cout << "Hi " << name << ", choose an option:" << endl;
-        cout << "1. Find house using filters via DFS and BFS" << endl;
-        cout << "2. Surprise me!" << endl;
-        cout << "3. Print all houses utilizing unordered map" << endl;
+        cout << "Hi " << name << ", what are you looking for today:" << endl;
+        cout << "1. Find house using price and size" << endl;
+        cout << "2. Find me a random house!" << endl;
+        cout << "3. Print all possible houses in the unordered map" << endl;
         cin >> choice;
         if (choice == 1) {
             string state;
             int max_price;
             int min_size;
-
             // User input
             cout << "Which state would you like to search in? (enter with capital first letter)?" << endl;
             cin >> state;
@@ -305,63 +288,56 @@ int main() {
             cin >> max_price;
             cout << "What is the minimum size (sq. ft) you want your dream home to be? : " << endl;
             cin >> min_size;
-            // Create BST and insert houses of chosen state
             BST house_bst;
             for (const auto &house: state_to_houses[state]) {
                 house_bst.insert(house);
             }
-            // Create BST for size filtered houses
             BST size_filtered_tree;
             // Filter houses by max price and min size
             house_bst.filter_houses_by_size(state, max_price, size_filtered_tree, min_size);
-            // Store the filtered houses in a vector
             vector<House> final_houses;
             size_filtered_tree.filtered_houses_to_vector(final_houses);
-            // Measure time for DFS and BFS traversals on house_bst
-            auto start_dfs_1 = high_resolution_clock::now();
+
+            auto start_dfs = high_resolution_clock::now();
             house_bst.dfs_traversal();
-            // auto stop_d;
-            auto stop_dfs_1 = high_resolution_clock::now();
-            auto duration_dfs_1 = duration_cast<microseconds>(stop_dfs_1 - start_dfs_1);
+            auto stop_dfs = high_resolution_clock::now();
+            auto duration_dfs = duration_cast<microseconds>(stop_dfs - start_dfs);
 
-            auto start_bfs_1 = high_resolution_clock::now();
-            house_bst.bfs_traversal();
-            auto stop_bfs_1 = high_resolution_clock::now();
-            auto duration_bfs_1 = duration_cast<microseconds>(stop_bfs_1 - start_bfs_1);
-
-            // Measure time for DFS and BFS traversals on size_filtered_tree
-            auto start_dfs_2 = high_resolution_clock::now();
+            auto start_dfs_next = high_resolution_clock::now();
             size_filtered_tree.dfs_traversal();
-            auto stop_dfs_2 = high_resolution_clock::now();
-            auto duration_dfs_2 = duration_cast<microseconds>(stop_dfs_2 - start_dfs_2);
+            auto stop_dfs_next = high_resolution_clock::now();
+            auto duration_dfs_next = duration_cast<microseconds>(stop_dfs_next - start_dfs_next);
 
-            auto start_bfs_2 = high_resolution_clock::now();
+            auto start_bfs = high_resolution_clock::now();
+            house_bst.bfs_traversal();
+            auto stop_bfs = high_resolution_clock::now();
+            auto duration_bfs = duration_cast<microseconds>(stop_bfs - start_bfs);
+
+            auto start_bfs_next = high_resolution_clock::now();
             size_filtered_tree.bfs_traversal();
-            auto stop_bfs_2 = high_resolution_clock::now();
-            auto duration_bfs_2 = duration_cast<microseconds>(stop_bfs_2 - start_bfs_2);
+            auto stop_bfs_next = high_resolution_clock::now();
+            auto duration_bfs_next = duration_cast<microseconds>(stop_bfs_next - start_bfs_next);
 
-            // Calculate total time for DFS and BFS traversals
-            auto total_dfs_time = duration_dfs_1 + duration_dfs_2;
-            auto total_bfs_time = duration_bfs_1 + duration_bfs_2;
+            auto dfs_time = duration_dfs + duration_dfs_next;
+            auto bfs_time = duration_bfs + duration_bfs_next;
             // Print the final_houses vector
             if (final_houses.empty()) {
                 cout << "No houses found with the specified filters." << endl;
-                cout << "Suggesting an alternative house by relaxing the filters..." << endl << endl;
+                cout << "Suggesting an alternative house by fixing the filters..." << endl << endl;
                 // Relax the filters
-                int relaxed_max_price = max_price + 10000;
-                int relaxed_min_size = min_size - 200;
-                if (relaxed_min_size < 0.0) {
-                    relaxed_min_size = 0.0;
+                int new_max_price = max_price + 10000;
+                int new_min_size = min_size - 200;
+                if (new_min_size < 0.0) {
+                    new_min_size = 0.0;
                 }
-                // Filter houses with relaxed filters
-                BST relaxed_size_filtered_tree;
-                house_bst.filter_houses_by_size(state, relaxed_max_price, relaxed_size_filtered_tree,
-                                                      relaxed_min_size);
-                // Store the filtered houses in a vector
-                vector<House> relaxed_final_houses;
-                relaxed_size_filtered_tree.filtered_houses_to_vector(relaxed_final_houses);
-                // Print the relaxed_final_houses vector
-                for (const House &house: relaxed_final_houses) {
+                BST new_size_filtered_tree;
+                house_bst.filter_houses_by_size(state, new_max_price, new_size_filtered_tree,
+                                                      new_min_size);
+
+                vector<House> new_final_houses;
+                new_size_filtered_tree.filtered_houses_to_vector(new_final_houses);
+
+                for (const House &house: new_final_houses) {
                     cout << house.address << " (" << house.bedrooms << " bedrooms, " << house.bathrooms << " bathrooms, " << house.houseSize << " square feet)"
                          << endl;
                 }
@@ -373,8 +349,8 @@ int main() {
                 }
             }
             // Print time measurements
-            cout << "Total DFS traversal time: " << total_dfs_time.count() << " microseconds" << endl;
-            cout << "Total BFS traversal time: " << total_bfs_time.count() << " microseconds" << endl;
+            cout << "DFS traversal time: " << dfs_time.count() << " microseconds" << endl;
+            cout << "BFS traversal time: " << bfs_time.count() << " microseconds" << endl;
         }
         else if (choice == 2) {
             House random_house = select_random_house_from_map(houses);
@@ -388,13 +364,13 @@ int main() {
         else if (choice == 3) {
             printAllHouses(houses);
         }
-        int continueChoice;
-        cout << endl <<"Would you like to start over or exit?" << endl;
-        cout << "1. Start over" << endl;
+        int finalChoice;
+        cout << endl <<"Would you like to restart or exit?" << endl;
+        cout << "1. Restart" << endl;
         cout << "2. Exit" << endl;
-        cin >> continueChoice;
+        cin >> finalChoice;
 
-        if (continueChoice == 2) {
+        if (finalChoice == 2) {
             runAgain = false;
         }
     }
