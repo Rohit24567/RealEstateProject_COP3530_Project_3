@@ -1,3 +1,4 @@
+//Created by Daniel Lee, Rohit Inampudi, Abhinav Ravipati
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -71,7 +72,21 @@ private:
         }
 
         in_order_traversal_to_vector(node->left, houses);
-        houses.push_back(node->house);
+
+        // Check if the house with the same address is already in the vector
+        bool found = false;
+        for (const House& house : houses) {
+            if (house.address == node->house.address) {
+                found = true;
+                break;
+            }
+        }
+
+        // Add the house to the vector only if it's not already present
+        if (!found) {
+            houses.push_back(node->house);
+        }
+
         in_order_traversal_to_vector(node->right, houses);
     }
     // Function for the surprise feature of the program using BFS
@@ -275,14 +290,15 @@ int main() {
             int min_size;
             // User input
             cout << "Which state would you like to search in? (enter with capital first letter)?" << endl;
-            cin >> state;
+            cin.ignore(); // Ignore any previous input
+            getline(cin, state); // Read the entire line for the state input
             while (state != "Puerto Rico" && state != "Virgin Islands" && state != "Alabama" && state != "Alaska" && state != "Arizona" && state != "Arkansas" && state != "California" && state != "Colorado" && state != "Connecticut" && state != "Delaware" && state != "Florida" && state != "Georgia" && state != "Hawaii" && state != "Idaho" && state != "Illinois" && state != "Indiana" && state != "Iowa" && state != "Kansas" && state != "Kentucky" && state != "Louisiana" && state != "Maine" && state != "Maryland" && state != "Massachusetts" && state != "Michigan" && state != "Minnesota" && state != "Mississippi" && state != "Missouri" && state != "Montana" && state != "Nebraska" && state != "Nevada" && state != "New Hampshire" && state != "New Jersey" && state != "New Mexico" && state != "New York" && state != "North Carolina" && state != "North Dakota" && state != "Ohio" && state != "Oklahoma" && state != "Oregon" && state != "Pennsylvania" && state != "Rhode Island" && state != "South Carolina" && state != "South Dakota" && state != "Tennessee" && state != "Texas" && state != "Utah" && state != "Vermont" && state != "Virginia" && state != "Washington" && state != "West Virginia" && state != "Wisconsin" && state != "Wyoming") {
                 cout << "Invalid state" << endl;
                 cout << "Try again!" << endl;
                 state = " ";
                 cin >> state;
             }
-            state += "\r";
+            //state += "\r";
             cout << "What is the maximum price you want the house to be? (in USD)?: " << endl;
             cin >> max_price;
             cout << "What is the minimum size (sq. ft) you want your dream home to be? : " << endl;
@@ -331,7 +347,7 @@ int main() {
                 }
                 BST new_size_filtered_tree;
                 house_bst.filter_houses_by_size(state, new_max_price, new_size_filtered_tree,
-                                                      new_min_size);
+                                                new_min_size);
 
                 vector<House> new_final_houses;
                 new_size_filtered_tree.filtered_houses_to_vector(new_final_houses);
